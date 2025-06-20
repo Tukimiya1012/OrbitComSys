@@ -24,182 +24,160 @@
 
             //マテリアル設定
             const material = new THREE.MeshBasicMaterial({wireframe:true});
-            const linemat = new THREE.LineBasicMaterial({color:0xed1a3d});
-            const linemat2 = new THREE.LineBasicMaterial({color:0xffffff});
+            const linemat = new THREE.LineBasicMaterial({color:0xffffff});
 
 
             //各種パラメータ設定
-            //a:軌道長半径、e:離心率、i:傾斜角、node:昇交点経度(黄経)、peri:近点引数(傾斜角引数)、m:質量、r:半径、mu:日日平均運動、den:密度、acc:平均軌道速度 km/day/km^3/
 
+            var PlanetNameIndexs = [
+                "Sol","Mercury","Venus","Earth","Moon","Mars"
+            ];
             var planetsMeshize = 1,
                 frame = 0,
                 targetNumber = 0,
                 stop = false,
                 PointsCount = 0,
                 PointsCountValue = 1,
-                a = [],
-                b = [],
-                c = [],
-                d = [],
-                e = [],
-                f = [],
-                g = [],
                 simT = 1,
                 time = 0,
                 dt = 1,//(60*60*24)
-                G = 6.67428 * Math.pow(10,-11)/1000;//m kg s
+                G = 6.67428 * Math.pow(10,-11)/1000,//m kg s
+
+                OrbitPoints = [];
+                for(let i=0; i<PlanetNameIndexs.length; i++){
+                    OrbitPoints.push([]);
+                };
+
 
             document.getElementById("bysok").value = simT;
             document.getElementById("size").value = planetsMeshize;
             document.getElementById("target").value = 0;
             document.getElementById("Point").value = PointsCountValue;
 
-            var PlanetNameIndexs = [
-                "apola","nelme","lapea","mela","kijana","kazul","skazon"
-            ];
-
+            //a:軌道長半径、e:離心率、i:傾斜角、node:昇交点経度(黄経)、peri:近点引数(傾斜角引数)、m:質量、r:半径、mu:日日平均運動、den:密度、acc:平均軌道速度 km/day/km^3/
+            //天体情報
             var OrbitalBodys ={
-                apola:{
+                Sol:{
+                    type:"planet",
                     a:0,
-                    m:1.61e+30 / 1000/1000/1000,
-                    r:577000 / 1000,
-                    den:2003,//kg/m^3
+                    m:1.99*1e+30 / 1000/1000/1000,
+                    r:695510 / 1000,
+                    den:1411,//kg/m^3
                     acc:0,
                     i:0
                 },
-                nelme:{
-                    a:6.41e7 / 1000,
-                    e:0.03,
-                    i:5.33,
-                    node:47,
-                    peri:0,
-                    m:2.26 * 1e+23 / 1000/1000/1000,
-                    r:2204 / 1000,
-                    mu:rad(360/113.67),
-                    den:5033,
-                    acc:40.98
+                Mercury:{
+                    type:"planet",
+                    a:5.791*1e+7 / 1000,
+                    e:0.205,
+                    i:7.00,
+                    node:48.33,
+                    peri:77.45,
+                    m:3.301*1e+23 / 1000/1000/1000,
+                    r:2439.5 / 1000,
+                    mu:rad(360/87.97),
+                    den:5427,
+                    acc:47.36
                 },
-                lapea:{
-                    a:1.02e+8/ 1000,
-                    e:0.002,
-                    i:0.04,
-                    node:0,
-                    peri:96,
-                    m:3.82 * 1e+24/1000/1000/1000,
-                    r:5479 / 1000,
-                    mu:rad(360/227.343),
-                    den:5540 ,
-                    acc:32.52
+                Venus:{
+                    type:"planet",
+                    a:1.082*1e+8/ 1000,
+                    e:0.0067,
+                    i:3.39,
+                    node:76.68,
+                    peri:131.5,
+                    m:4.86*1e+24 /1000/1000/1000,
+                    r:6051.8 / 1000,
+                    mu:rad(360/224.701),
+                    den:5243,
+                    acc:35.02
                 },
-                mela:{
-                    acc:1.03,
-                    a:2.40e+5 / 1000,
-                    e:0.03,
-                    i:0,
-                    m:4.57e+22 /1000/1000/1000,
-                    r:1490 / 1000,
-                    mu:rad(360/16.91),
-                    den:3273,
+                Earth:{
+                    type:"planet",
+                    acc:29.78,
+                    a:1.495*1e+8 / 1000,
+                    e:0.0167,
+                    i:0.002,
+                    m:5.972*1e+24 / 1000/1000/1000,
+                    r:6378.1 / 1000,
+                    mu:rad(360/365.24),
+                    den:551,
                 },
-                kijana:{
-                    acc:28.41,
-                    a:1.33e+8 / 1000,
-                    e:0.002,
-                    i:0.2,
-                    m:4.04e+24 /1000/1000/1000,
-                    r:5734 /1000,
+                Moon:{
+                    type:"satellite",
+                    p:"Earth",
+                    a:3.84*1e+5 / 1000,
+                    e:0.054,
+                    i:5.514,
+                    m:7.347*1e+22 / 1000/1000/1000,
+                    r:1737.15 / 1000,
+                    mu:rad(360/27.31),
+                    den:3344,
+                    acc:1.02
                 },
-                kazul:{
-                    acc:1.48,
-                    a:1.23e+5 /1000,
-                    e:0.033,
-                    i:0,
-                    m:8.41e+20 /1000/1000/1000,
-                    r:389 / 1000
-                },
-                skazon:{
-                    acc:0.39,
-                    a:3.09e+5 /1000,
-                    e:0.008,
-                    i:0,
-                    m:2.76e+22 /1000/1000/1000,
-                    r:1233 / 1000
+                Mars:{
+                    type:"planet",
+                    acc:24.07,
+                    a:2.27*1e+8 / 1000,
+                    e:0.093,
+                    i:1.85,
+                    m:6.41*1e+23 /1000/1000/1000,
+                    r:3397.2 / 1000,
                 }
 
             };
 
             //位置ベクトル情報
-            var PosVector3 = [
-                new THREE.Vector3(0,0,0),
-                new THREE.Vector3(OrbitalBodys.nelme.a,0,0),
-                new THREE.Vector3(OrbitalBodys.lapea.a,0,0),
-                new THREE.Vector3(OrbitalBodys.mela.a + OrbitalBodys.lapea.a,0,0),
-                new THREE.Vector3(OrbitalBodys.kijana.a,0,0),
-                new THREE.Vector3(OrbitalBodys.kazul.a + OrbitalBodys.kijana.a,0,0),
-                new THREE.Vector3(OrbitalBodys.skazon.a + OrbitalBodys.kijana.a,0,0)
-            ];
-            var Velocity = [
-                new THREE.Vector3(0,OrbitalBodys.apola.acc*Math.sin(OrbitalBodys.apola.i*Math.PI/180),0),
-                new THREE.Vector3(0,OrbitalBodys.nelme.acc*Math.sin(OrbitalBodys.nelme.i*Math.PI/180),-OrbitalBodys.nelme.acc),
-                new THREE.Vector3(0,OrbitalBodys.lapea.acc*Math.sin(OrbitalBodys.lapea.i*Math.PI/180),-OrbitalBodys.lapea.acc),
-                new THREE.Vector3(0,OrbitalBodys.mela.acc*Math.sin(OrbitalBodys.mela.i*Math.PI/180),-OrbitalBodys.mela.acc - OrbitalBodys.lapea.acc),
-                new THREE.Vector3(0,OrbitalBodys.kijana.acc*Math.sin(OrbitalBodys.kijana.i*Math.PI/180),-OrbitalBodys.kijana.acc),
-                new THREE.Vector3(0,OrbitalBodys.kazul.acc*Math.sin(OrbitalBodys.kazul.i*Math.PI/180),-OrbitalBodys.kazul.acc - OrbitalBodys.kijana.acc),
-                new THREE.Vector3(0,OrbitalBodys.skazon.acc*Math.sin(OrbitalBodys.skazon.i*Math.PI/180),-OrbitalBodys.skazon.acc - OrbitalBodys.kijana.acc)
-            ];
+            var PosVector3 = [];
+            for(let i=0; i<PlanetNameIndexs.length; i++){
+                if(OrbitalBodys[PlanetNameIndexs[i]].type == "planet"){
+                    PosVector3.push(new THREE.Vector3(0,0,OrbitalBodys[PlanetNameIndexs[i]].a));
+                }
+                if(OrbitalBodys[PlanetNameIndexs[i]].type == "satellite"){
+                    PosVector3.push(new THREE.Vector3(
+                        0,0,
+                        OrbitalBodys[PlanetNameIndexs[i]].a + OrbitalBodys[OrbitalBodys[PlanetNameIndexs[i]].p].a
+                    ));
+                }
+            };
+            
+
+            //初期速度設定
+            var Velocity = [];
+            for(let i=0; i<PlanetNameIndexs.length; i++){
+                if(OrbitalBodys[PlanetNameIndexs[i]].type == "planet"){
+                    Velocity.push(new THREE.Vector3(OrbitalBodys[PlanetNameIndexs[i]].acc ,0,0));
+                }
+                if(OrbitalBodys[PlanetNameIndexs[i]].type == "satellite"){
+                    Velocity.push(new THREE.Vector3(
+                        OrbitalBodys[PlanetNameIndexs[i]].acc + OrbitalBodys[OrbitalBodys[PlanetNameIndexs[i]].p].acc,
+                        0,0
+                    ));
+                }
+            };
+
+            
 
             //惑星設定
-            const apola_geo = new THREE.SphereGeometry(OrbitalBodys.apola.r , 16, 8);
-            const nelme_geo = new THREE.SphereGeometry(OrbitalBodys.nelme.r , 16, 8);
-            const lapea_geo = new THREE.SphereGeometry(OrbitalBodys.lapea.r , 16,8);
-            const mela_geo = new THREE.SphereGeometry(OrbitalBodys.mela.r , 16,8);
-            const kijana_geo = new THREE.SphereGeometry(OrbitalBodys.kijana.r , 16,8);
-            const kazul_geo = new THREE.SphereGeometry(OrbitalBodys.kazul.r , 16,8);
-            const skazon_geo = new THREE.SphereGeometry(OrbitalBodys.skazon.r , 16,8);
+            var PlanetObj = {
+                geometry:{},
+                mesh:{}
+            }
+            var OrbitObj = {
+                geometry:{},
+                mesh:{}
+            }
+            
+            for(let i=0; i<PlanetNameIndexs.length; i++){
+                PlanetObj.geometry[PlanetNameIndexs[i]] = new THREE.SphereGeometry(OrbitalBodys[PlanetNameIndexs[i]].r ,16,8);
+                PlanetObj.mesh[PlanetNameIndexs[i]] = new THREE.Mesh(PlanetObj.geometry[PlanetNameIndexs[i]], material);
+                PlanetObj.mesh[PlanetNameIndexs[i]].position.set(PosVector3[i].x, PosVector3[i].y, PosVector3[i].z);
 
-            var planetsMesh = {
-                apola:new THREE.Mesh(apola_geo,material),
-                nelme:new THREE.Mesh(nelme_geo,material),
-                lapea:new THREE.Mesh(lapea_geo,material),
-                mela:new THREE.Mesh(mela_geo,material),
-                kijana:new THREE.Mesh(kijana_geo,material),
-                kazul:new THREE.Mesh(kazul_geo,material),
-                skazon:new THREE.Mesh(skazon_geo,material)
-            };
-
-            planetsMesh["apola"].position.set(PosVector3[0].x, PosVector3[0].y, PosVector3[0].z);
-            planetsMesh["nelme"].position.set(PosVector3[1].x, PosVector3[1].y, PosVector3[1].z);
-            planetsMesh["lapea"].position.set(PosVector3[2].x, PosVector3[2].y, PosVector3[2].z);
-            planetsMesh["mela"].position.set(PosVector3[3].x, PosVector3[3].y, PosVector3[3].z);
-            planetsMesh["kijana"].position.set(PosVector3[4].x, PosVector3[4].y, PosVector3[4].z);
-            planetsMesh["kazul"].position.set(PosVector3[5].x, PosVector3[5].y, PosVector3[5].z);
-            planetsMesh["skazon"].position.set(PosVector3[6].x, PosVector3[6].y, PosVector3[6].z);
-
-            //オービット
-            const apola_orbit = new THREE.BufferGeometry().setFromPoints(a);
-            const nelme_orbit = new THREE.BufferGeometry().setFromPoints(b);
-            const lapea_orbit = new THREE.BufferGeometry().setFromPoints(c);
-            const mela_orbit = new THREE.BufferGeometry().setFromPoints(d);
-            const kijana_orbit = new THREE.BufferGeometry().setFromPoints(e);
-            const kazul_orbit = new THREE.BufferGeometry().setFromPoints(f);
-            const skazon_orbit = new THREE.BufferGeometry().setFromPoints(g);
-
-            var orbitsMesh = {
-                apola:new THREE.Line(apola_orbit,linemat),
-                nelme:new THREE.Line(nelme_orbit,linemat),
-                lapea:new THREE.Line(lapea_orbit,linemat2),
-                mela:new THREE.Line(mela_orbit,linemat2),
-                kijana:new THREE.Line(kijana_orbit,linemat2),
-                kazul:new THREE.Line(kazul_orbit,linemat2),
-                skazon:new THREE.Line(skazon_orbit,linemat2)
-            };
-
-            orbitsMesh["nelme"].frustumCulled = false;
-            orbitsMesh["lapea"].frustumCulled = false;
-            orbitsMesh["mela"].frustumCulled = false;
-            orbitsMesh["kijana"].frustumCulled = false;
-            orbitsMesh["kazul"].frustumCulled = false;
-            orbitsMesh["skazon"].frustumCulled = false;
+                OrbitObj.geometry[PlanetNameIndexs[i]] = new THREE.BufferGeometry().setFromPoints(OrbitPoints[i]);
+                OrbitObj.mesh[PlanetNameIndexs[i]] = new THREE.Line(OrbitObj.geometry[PlanetNameIndexs[i]],linemat);
+                OrbitObj.mesh[PlanetNameIndexs[i]].frustumCulled = false;
+            }
+            
 
             ObjectAttach(scene);
 
@@ -221,21 +199,10 @@
             //位置、サイズアップデート
 
             function PosUpdatePlaet(){
-                planetsMesh["apola"].position.set(PosVector3[0].x, PosVector3[0].y, PosVector3[0].z);
-                planetsMesh["nelme"].position.set(PosVector3[1].x, PosVector3[1].y, PosVector3[1].z);
-                planetsMesh["lapea"].position.set(PosVector3[2].x, PosVector3[2].y, PosVector3[2].z);
-                planetsMesh["mela"].position.set(PosVector3[3].x, PosVector3[3].y, PosVector3[3].z);
-                planetsMesh["kijana"].position.set(PosVector3[4].x, PosVector3[4].y, PosVector3[4].z);
-                planetsMesh["kazul"].position.set(PosVector3[5].x, PosVector3[5].y, PosVector3[5].z);
-                planetsMesh["skazon"].position.set(PosVector3[6].x, PosVector3[6].y, PosVector3[6].z);
-
-                planetsMesh["apola"].scale.set(planetsMeshize,planetsMeshize,planetsMeshize);
-                planetsMesh["nelme"].scale.set(planetsMeshize, planetsMeshize, planetsMeshize);
-                planetsMesh["lapea"].scale.set(planetsMeshize, planetsMeshize, planetsMeshize);
-                planetsMesh["mela"].scale.set(planetsMeshize, planetsMeshize, planetsMeshize);
-                planetsMesh["kijana"].scale.set(planetsMeshize, planetsMeshize, planetsMeshize);
-                planetsMesh["kazul"].scale.set(planetsMeshize, planetsMeshize, planetsMeshize);
-                planetsMesh["skazon"].scale.set(planetsMeshize, planetsMeshize, planetsMeshize);
+                for(let i=0; i<PlanetNameIndexs.length; i++){
+                    PlanetObj.mesh[PlanetNameIndexs[i]].position.set(PosVector3[i].x, PosVector3[i].y, PosVector3[i].z);
+                    PlanetObj.mesh[PlanetNameIndexs[i]].scale.set(planetsMeshize,planetsMeshize,planetsMeshize);
+                }
             }
 
 
@@ -288,17 +255,9 @@
 
                 if (PointsCount == PointsCountValue){
 
-                    var NormalVec = Velocity[1].normalize();
-                    var NormalInvVec = new THREE.Vector3(NormalVec[0], NormalVec[1], NormalVec[2]);
-
-
-                    a.push(PosVector3[0].clone());
-                    b.push(PosVector3[1].clone());
-                    c.push(PosVector3[2].clone());
-                    d.push(PosVector3[3].clone());
-                    e.push(PosVector3[4].clone());
-                    f.push(PosVector3[5].clone());
-                    g.push(PosVector3[6].clone());
+                    for(let i=0; i<PlanetNameIndexs.length; i++){
+                        OrbitPoints[i].push(PosVector3[i].clone());
+                    }
 
                     PointsCount = 0;
                 }
@@ -337,21 +296,13 @@
                         orbital();
                         time++;
                     }
-                    if(a.length > 500){ a.splice(0, 4); }
-                    if(b.length > 500){ b.splice(0, 4); }
-                    if(c.length > 500){ c.splice(0, 4); }
-                    if(d.length > 500){ d.splice(0, 4); }
-                    if(e.length > 500){ e.splice(0, 4); }
-                    if(f.length > 500){ f.splice(0, 4); }
-                    if(g.length > 500){ g.splice(0, 4); }
+                    for(let i=0; i<PlanetNameIndexs.length; i++){
+                        if(OrbitPoints[i] < 500){OrbitPoints[i].splice(0,4);}
+                    }
 
-                    apola_orbit.setFromPoints(a);
-                    nelme_orbit.setFromPoints(b);
-                    lapea_orbit.setFromPoints(c);
-                    mela_orbit.setFromPoints(d);
-                    kijana_orbit.setFromPoints(e);
-                    kazul_orbit.setFromPoints(f);
-                    skazon_orbit.setFromPoints(g);
+                    for(let i=0; i<PlanetNameIndexs.length; i++){
+                        OrbitObj.geometry[PlanetNameIndexs[i]].setFromPoints(OrbitPoints[i]);
+                    }
                 }
 
                 updateCameraPosition(cameraZoom, cameraAzimuth, cameraElevation);
@@ -371,21 +322,10 @@
 
             //オブジェクト配置
             function ObjectAttach(scene){
-                scene.attach(planetsMesh["apola"]);
-                scene.attach(planetsMesh["nelme"]);
-                scene.attach(planetsMesh["lapea"]);
-                scene.attach(planetsMesh["mela"]);
-                scene.attach(planetsMesh["kijana"]);
-                scene.attach(planetsMesh["kazul"]);
-                scene.attach(planetsMesh["skazon"]);
-
-                scene.attach(orbitsMesh["apola"]);
-                scene.attach(orbitsMesh["nelme"]);
-                scene.attach(orbitsMesh["lapea"]);
-                scene.attach(orbitsMesh["mela"]);
-                scene.attach(orbitsMesh["kijana"]);
-                scene.attach(orbitsMesh["kazul"]);
-                scene.attach(orbitsMesh["skazon"]);
+                for(let i=0; i<PlanetNameIndexs.length; i++){
+                    scene.attach(PlanetObj.mesh[PlanetNameIndexs[i]]);
+                    scene.attach(OrbitObj.mesh[PlanetNameIndexs[i]]);
+                }
             }
 
             document.querySelector("#myCanvas").addEventListener("mousedown", onDocumentMouseDown, false);
@@ -436,10 +376,10 @@
                 // 仰角の範囲制限（-89度〜89度）
                 cameraElevation = Math.max(-Math.PI/2 + 0.01, Math.min(Math.PI/2 - 0.01, cameraElevation));
                 // 球面座標から直交座標へ変換
-                camera.position.x = planetsMesh[PlanetNameIndexs[targetNumber]].position.x + cameraRadius * Math.cos(cameraElevation) * Math.sin(cameraAzimuth);
-                camera.position.y = planetsMesh[PlanetNameIndexs[targetNumber]].position.y + cameraRadius * Math.sin(cameraElevation);
-                camera.position.z = planetsMesh[PlanetNameIndexs[targetNumber]].position.z + cameraRadius * Math.cos(cameraElevation) * Math.cos(cameraAzimuth);
-                camera.lookAt(planetsMesh[PlanetNameIndexs[targetNumber]].position);
+                camera.position.x = PlanetObj.mesh[PlanetNameIndexs[targetNumber]].position.x + cameraRadius * Math.cos(cameraElevation) * Math.sin(cameraAzimuth);
+                camera.position.y = PlanetObj.mesh[PlanetNameIndexs[targetNumber]].position.y + cameraRadius * Math.sin(cameraElevation);
+                camera.position.z = PlanetObj.mesh[PlanetNameIndexs[targetNumber]].position.z + cameraRadius * Math.cos(cameraElevation) * Math.cos(cameraAzimuth);
+                camera.lookAt(PlanetObj.mesh[PlanetNameIndexs[targetNumber]].position);
             }
 
             function Setting(scene){
@@ -492,7 +432,7 @@
             }
             .uis{
                 color: white;
-                position: absolute;
+                position: abSolute;
                 top: 20;
                 left: 30;
             }
