@@ -5,22 +5,26 @@
             {
                 "imports": {
                   "three": "https://cdn.jsdelivr.net/npm/three@0.167.0/build/three.module.js",
-                  "three/addons/": "https://unpkg.com/three@0.152.2/examples/jsm/"
+                  "three/addons/": "https://unpkg.com/three@0.152.2/examples/jsm/",
+                  "three/examples/": "https://unpkg.com/three@0.126.1/examples/"
                 }
               }
         </script>
         <script type="module">
             import * as THREE from "three";
             import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+            import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 
             var SettingElements;
             var scene;
             var camera;
             var renderer;
+            var loader;
             SettingElements = Setting(scene);
             scene = SettingElements[0];
             camera = SettingElements[1];
             renderer = SettingElements[2];
+            loader = SettingElements[3]
 
             //マテリアル設定
             const material = new THREE.MeshBasicMaterial({wireframe:true});
@@ -54,40 +58,40 @@
             document.getElementById("target").value = 0;
             document.getElementById("Point").value = PointsCountValue;
 
-            //a:軌道長半径、e:離心率、i:傾斜角、node:昇交点経度(黄経)、peri:近点引数(傾斜角引数)、m:質量、r:半径、mu:日日平均運動、den:密度、acc:平均軌道速度 km/day/km^3/
+            //a:軌道長半径、e:離心率、i:傾斜角、node:昇交点経度(黄経)、peri:近点引数(傾斜角引数)、m:質量、r:半径、mu:公転周期、den:密度、acc:平均軌道速度 km/day/km^3/
             //天体情報
             var OrbitalBodys ={
                 Sol:{
                     type:"planet",
                     a:0,
-                    m:1.99*1e+30 / 1000/1000/1000,
-                    r:695510 / 1000,
+                    m:1.99*1e+30,
+                    r:695510,
                     den:1411,//kg/m^3
                     acc:0,
                     i:0
                 },
                 Mercury:{
                     type:"planet",
-                    a:5.791*1e+7 / 1000,
+                    a:5.791*1e+7,
                     e:0.205,
                     i:7.00,
                     node:48.33,
                     peri:77.45,
-                    m:3.301*1e+23 / 1000/1000/1000,
-                    r:2439.5 / 1000,
+                    m:3.301*1e+23,
+                    r:2439.5,
                     mu:rad(360/87.97),
                     den:5427,
                     acc:47.36
                 },
                 Venus:{
                     type:"planet",
-                    a:1.082*1e+8/ 1000,
+                    a:1.082*1e+8,
                     e:0.0067,
                     i:3.39,
                     node:76.68,
                     peri:131.5,
-                    m:4.86*1e+24 /1000/1000/1000,
-                    r:6051.8 / 1000,
+                    m:4.86*1e+24,
+                    r:6051.8,
                     mu:rad(360/224.701),
                     den:5243,
                     acc:35.02
@@ -95,22 +99,22 @@
                 Earth:{
                     type:"planet",
                     acc:29.78,
-                    a:1.495*1e+8 / 1000,
+                    a:1.495*1e+8,
                     e:0.0167,
                     i:0.002,
-                    m:5.972*1e+24 / 1000/1000/1000,
-                    r:6378.1 / 1000,
+                    m:5.972*1e+24,
+                    r:6378.1,
                     mu:rad(360/365.24),
                     den:551,
                 },
                 Moon:{
                     type:"satellite",
                     p:"Earth",
-                    a:3.84*1e+5 / 1000,
+                    a:3.84*1e+5,
                     e:0.054,
                     i:5.514,
-                    m:7.347*1e+22 / 1000/1000/1000,
-                    r:1737.15 / 1000,
+                    m:7.347*1e+22,
+                    r:1737.15,
                     mu:rad(360/27.31),
                     den:3344,
                     acc:1.02
@@ -118,14 +122,21 @@
                 Mars:{
                     type:"planet",
                     acc:24.07,
-                    a:2.27*1e+8 / 1000,
+                    a:2.27*1e+8,
                     e:0.093,
                     i:1.85,
-                    m:6.41*1e+23 /1000/1000/1000,
-                    r:3397.2 / 1000,
+                    m:6.41*1e+23,
+                    r:3397.2,
                 }
 
             };
+
+            //OrbitalBodys調整
+            for(let i=0; i<PlanetNameIndexs.length; i++){
+                OrbitalBodys[PlanetNameIndexs[i]].a = OrbitalBodys[PlanetNameIndexs[i]].a / 1000;
+                OrbitalBodys[PlanetNameIndexs[i]].r = OrbitalBodys[PlanetNameIndexs[i]].r / 1000;
+                OrbitalBodys[PlanetNameIndexs[i]].m = OrbitalBodys[PlanetNameIndexs[i]].m / 1000/1000/1000;
+            }
 
             //位置ベクトル情報
             var PosVector3 = [];
@@ -177,6 +188,20 @@
                 OrbitObj.mesh[PlanetNameIndexs[i]] = new THREE.Line(OrbitObj.geometry[PlanetNameIndexs[i]],linemat);
                 OrbitObj.mesh[PlanetNameIndexs[i]].frustumCulled = false;
             }
+            `
+            //宇宙船読み込み
+            var SpaceCraft = loader.load(
+                '/SpaceCraft.fbx',
+                (object) => {
+
+                },
+                (xhr) => {
+                    console.log((xhr.loaded / xhr.total) * 100 + '% loaded')
+                },
+                (error) => {
+                    console.log(error)
+                }
+            );`
             
 
             ObjectAttach(scene);
@@ -325,6 +350,10 @@
                 for(let i=0; i<PlanetNameIndexs.length; i++){
                     scene.attach(PlanetObj.mesh[PlanetNameIndexs[i]]);
                     scene.attach(OrbitObj.mesh[PlanetNameIndexs[i]]);
+                    `
+                    console.log(SpaceCraft);
+                    scene.add(SpaceCraft);
+                    `
                 }
             }
 
@@ -405,8 +434,9 @@
                 //座標軸
                 var axes = new THREE.AxesHelper(5000);
                 scene.add(axes);
+                var loaders = new FBXLoader()
 
-                return [scene,camera,renderer];
+                return [scene,camera,renderer,loaders];
             }
         </script>
     </head>
